@@ -65,6 +65,19 @@ class DatabaseManager:
     def create_tables():
         """Crear todas las tablas en la base de datos"""
         try:
+            # ✅ AGREGAR ESTOS IMPORTS AQUÍ:
+            from app.models.sample import Sample
+            from app.models.batch import Batch
+            from app.models.client import Client
+            from app.models.warehouse import Warehouse
+            from app.models.mine import Mine
+            # Importar cualquier otro modelo que tengas
+            
+            # DEBUG: Verificar qué tablas se van a crear
+            logger.info("Tablas que se van a crear:")
+            for table_name in Base.metadata.tables.keys():
+                logger.info(f"- {table_name}")
+            
             Base.metadata.create_all(bind=engine)
             logger.info("Tablas creadas exitosamente")
             return True

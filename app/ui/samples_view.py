@@ -403,11 +403,30 @@ class SamplesView:
         seal_code_field = ft.TextField(
             label="Sello de seguridad",
             value=sample.seal_code if is_edit else "",
+            expand=True,
+        )
+        
+        storage_location_field = ft.TextField(
+            label="Ubicación de almacenamiento",
+            value=sample.storage_location if is_edit else "",
+            expand=True,
+        )
+
+        observations_field = ft.TextField(
+            label="Observaciones",
+            value=sample.observations if is_edit else "",
             multiline=True,
             max_lines=3,
             width=400
         )
-        
+        user_field = ft.TextField(
+            label="ID de Usuario *",
+            value=str(sample.user) if is_edit and sample.user else "",
+            keyboard_type=ft.KeyboardType.NUMBER,
+            prefix_icon=ft.Icons.PERSON,
+            expand=True,
+        )
+
         quantity_field = ft.TextField(
             label="Cantidad *",
             value=str(sample.quantity) if is_edit else "",
@@ -421,10 +440,10 @@ class SamplesView:
             value=sample.unit if is_edit else "g",
             width=100,
             options=[
-                ft.dropdown.Option("g", "Gramos"),
-                ft.dropdown.Option("kg", "Kilogramos"),
-                ft.dropdown.Option("ml", "Mililitros"),
-                ft.dropdown.Option("l", "Litros")
+                ft.dropdown.Option("gr", "Gramos"),
+                ft.dropdown.Option("Kg", "Kilogramos"),
+                ft.dropdown.Option("Ton", "Tonelada"),
+                ft.dropdown.Option("Und", "Unidad")
             ]
         )
         
@@ -521,7 +540,8 @@ class SamplesView:
                     'extraction_date': datetime.strptime(extraction_date_field.value, "%Y-%m-%d"),
                     'seal_code': seal_code_field.value,
                     'storage_location': storage_location_field.value,
-                    'observations': ""
+                    'user': user_field.value,
+                    'observations': observations_field.value
                 }
                 
                 print(f"DEBUG: Datos a guardar: {sample_data}")
@@ -560,9 +580,9 @@ class SamplesView:
                     ft.Row([client_dropdown, warehouse_dropdown, batch_dropdown], spacing=10),
                     ft.Row([quantity_field, unit_dropdown, seal_code_field], spacing=10),
                     ft.Divider(),
-                    #storage_location_field,
+                    ft.Row([storage_location_field, user_field], spacing=10),
                     description_field,
-                    #observations_field
+                    observations_field
                 ], spacing=15, scroll=ft.ScrollMode.AUTO),
                 width=700,
                 height=550

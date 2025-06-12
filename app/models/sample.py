@@ -26,6 +26,7 @@ class Sample(Base):
     # CAMPOS ESPECÍFICOS DEL SISTEMA DE MUESTRAS
     client_id = Column(Integer, ForeignKey("clients.id"), nullable=True, index=True)  # Cliente
     warehouse_id = Column(Integer, ForeignKey("warehouses.id"), nullable=True, index=True)  # Bodega actual
+    user = Column(String(50), nullable=True)  #
     seal_code = Column(String(50))  # Código del sello físico
     storage_location = Column(String(100))  # Ubicación específica dentro de bodega
     observations = Column(Text)  # Observaciones específicas de la muestra
@@ -41,6 +42,7 @@ class Sample(Base):
     # Control
     active_status = Column(Boolean, default=True, nullable=False)
     
+
     # Campos de auditoría
     created_at = Column(DateTime, default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())

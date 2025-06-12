@@ -89,7 +89,8 @@ class SampleService:
                 lab_notes=sample_data.get('lab_notes', ''),
                 test_results=sample_data.get('test_results', ''),
                 tested_date=sample_data.get('tested_date'),
-                active_status=sample_data.get('active_status', True)
+                active_status=sample_data.get('active_status', True),
+                user= sample_data.get('user', 'system'),
             )
             
             session.add(sample)
