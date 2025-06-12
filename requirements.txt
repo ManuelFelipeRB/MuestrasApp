@@ -1,0 +1,23 @@
+# Dependencias principales del Sistema de Inventario de Laboratorio
+
+# Framework UI
+flet>=0.21.0
+
+# Backend API
+fastapi>=0.104.0
+uvicorn>=0.24.0
+
+# Base de datos
+sqlalchemy>=2.0.0
+aiosqlite>=0.19.0
+
+# Validación y serialización
+pydantic>=2.0.0
+
+# Utilidades
+python-multipart>=0.0.6
+python-dateutil>=2.8.0
+
+# Desarrollo y testing (opcional)
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
