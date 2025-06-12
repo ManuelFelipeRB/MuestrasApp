@@ -12,6 +12,8 @@ from .client import Client
 from .mine import Mine
 from .batch import Batch
 from .batch_warehouse import BatchWarehouse
+from .sample import Sample
+from .audit_log import AuditLog
 
 # Exportar todos los modelos disponibles
 __all__ = [
@@ -25,5 +27,7 @@ __all__ = [
     'Client',
     'Mine',
     'Batch',
-    'BatchWarehouse'
+    'BatchWarehouse',
+    'Sample',
+    'AuditLog'
 ]

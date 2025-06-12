@@ -51,6 +51,10 @@ def main(page: ft.Page):
                 ft.ElevatedButton(
                     "Probar Modelo Batch",
                     on_click=lambda _: test_batch_model(page)
+                ),
+                ft.ElevatedButton(
+                    "Probar Modelo Sample",
+                    on_click=lambda _: test_sample_model(page)
                 )
             ]),
             padding=30,
@@ -116,6 +120,169 @@ def test_database_connection(page):
                     color=ft.Colors.RED_800  # Corregido: Colors con mayúscula
                 ),
                 bgcolor=ft.Colors.RED_50,  # Corregido: Colors con mayúscula
+                padding=20,
+                border_radius=10
+            )
+        )
+    
+    page.update()
+    print("🔄 Página actualizada")
+
+def test_sample_model(page):
+    """Probar el modelo Sample"""
+    print("🔍 Iniciando prueba del modelo Sample...")
+    
+    try:
+        from app.models.database import DatabaseManager
+        from app.models.batch import Batch
+        from app.models.sample import Sample
+        from app.models.audit_log import AuditLog
+        from datetime import date
+        
+        print("📡 Obteniendo sesión de BD...")
+        session = DatabaseManager.get_session()
+        
+        # Obtener un lote existente
+        print("🔎 Buscando lote existente...")
+        batch = session.query(Batch).first()
+        if not batch:
+            print("❌ No se encontraron lotes")
+            return
+        print(f"✅ Lote encontrado: {batch.batch_number} (ID: {batch.id})")
+        
+        # Crear muestras de prueba
+        print("🧪 Creando muestras de prueba...")
+        
+        # Verificar si ya existen
+        existing_sample1 = session.query(Sample).filter_by(sample_code="SAM-001").first()
+        existing_sample2 = session.query(Sample).filter_by(sample_code="SAM-002").first()
+        
+        if not existing_sample1:
+            sample1 = Sample(
+                batch_id=batch.id,
+                sample_code="SAM-001",
+                description="Muestra de oro - análisis inicial",
+                extraction_date=date.today(),
+                quantity=50.0,
+                unit="g",
+                status="EXTRACTED"
+            )
+            session.add(sample1)
+            
+            # Crear log de auditoría
+            audit1 = AuditLog.create_log(
+                action="CREATE",
+                table_name="samples",
+                record_id=0,  # Se actualizará después del commit
+                new_values={"sample_code": "SAM-001", "quantity": 50.0},
+                summary="Nueva muestra extraída para análisis"
+            )
+            session.add(audit1)
+            session.commit()
+            audit1.record_id = sample1.id
+            print(f"✅ Muestra SAM-001 creada (ID: {sample1.id})")
+        else:
+            print(f"✅ Muestra SAM-001 ya existe (ID: {existing_sample1.id})")
+        
+        if not existing_sample2:
+            sample2 = Sample(
+                batch_id=batch.id,
+                sample_code="SAM-002",
+                description="Muestra de cobre - control de calidad",
+                extraction_date=date.today(),
+                quantity=75.0,
+                unit="g",
+                status="TESTED",
+                tested_date=date.today(),
+                test_results="Au: 15.2 g/t, Cu: 2.8%",
+                lab_notes="Análisis completado según protocolo estándar"
+            )
+            session.add(sample2)
+            
+            # Crear log de auditoría
+            audit2 = AuditLog.create_log(
+                action="CREATE",
+                table_name="samples", 
+                record_id=0,
+                new_values={"sample_code": "SAM-002", "status": "TESTED"},
+                summary="Muestra analizada con resultados"
+            )
+            session.add(audit2)
+            session.commit()
+            audit2.record_id = sample2.id
+            print(f"✅ Muestra SAM-002 creada (ID: {sample2.id})")
+        else:
+            print(f"✅ Muestra SAM-002 ya existe (ID: {existing_sample2.id})")
+        
+        # Consultar todas las muestras
+        print("🔎 Consultando todas las muestras...")
+        samples = session.query(Sample).all()
+        print(f"📊 Encontradas {len(samples)} muestras")
+        
+        # Consultar logs de auditoría
+        print("📋 Consultando logs de auditoría...")
+        audit_logs = session.query(AuditLog).order_by(AuditLog.timestamp.desc()).limit(5).all()
+        print(f"📊 Últimos {len(audit_logs)} logs de auditoría")
+        
+        # Mostrar resultado
+        if samples:
+            sample_list = "\n".join([
+                f"- {s.sample_code}: {s.quantity}{s.unit} - {s.status}"
+                for s in samples
+            ])
+            audit_list = "\n".join([
+                f"- {log.action} en {log.table_name}[{log.record_id}]"
+                for log in audit_logs
+            ])
+            
+            message = f"🎉 Modelos Sample y AuditLog funcionando!\n\nMuestras:\n{sample_list}\n\nÚltimos logs:\n{audit_list}"
+            print(f"✅ {message}")
+            
+            page.add(
+                ft.Container(
+                    content=ft.Text(
+                        message,
+                        size=14,
+                        color=ft.Colors.INDIGO_800
+                    ),
+                    bgcolor=ft.Colors.INDIGO_50,
+                    padding=20,
+                    border_radius=10
+                )
+            )
+        else:
+            message = "⚠️ No se encontraron muestras"
+            print(f"⚠️ {message}")
+            
+            page.add(
+                ft.Container(
+                    content=ft.Text(
+                        message,
+                        size=14,
+                        color=ft.Colors.ORANGE_800
+                    ),
+                    bgcolor=ft.Colors.ORANGE_50,
+                    padding=20,
+                    border_radius=10
+                )
+            )
+        
+        print("🔐 Cerrando sesión de BD...")
+        DatabaseManager.close_session(session)
+        print("✅ Prueba de modelo Sample completada")
+        
+    except Exception as e:
+        error_msg = f"❌ Error en modelo Sample:\n{str(e)}"
+        print(f"💥 {error_msg}")
+        
+        page.add(
+            ft.Container(
+                content=ft.Text(
+                    error_msg,
+                    size=14,
+                    color=ft.Colors.RED_800
+                ),
+                bgcolor=ft.Colors.RED_50,
                 padding=20,
                 border_radius=10
             )

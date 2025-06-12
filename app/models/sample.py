@@ -1,7 +1,7 @@
 """
 Modelo de Muestras para el sistema de inventario
 """
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, ForeignKey, Float, Date, Time
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, ForeignKey, Float, Date
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.models.database import Base
@@ -10,179 +10,134 @@ class Sample(Base):
     """
     Modelo de Muestra
     Relaciones:
-    - N:1 con Batch (Una muestra pertenece a un solo lote)
+    - N:1 con Batch (Una muestra pertenece a un lote)
     """
     __tablename__ = "samples"
     
     # Campos principales
     id = Column(Integer, primary_key=True, autoincrement=True)
     batch_id = Column(Integer, ForeignKey("batches.id"), nullable=False, index=True)
-    sample_number = Column(String(50), unique=True, nullable=False, index=True)
-    weight = Column(Float)  # Peso de la muestra
-    quantity = Column(Float)  # Cantidad de la muestra
-    unit = Column(String(10), default="kg")  # Unidad de medida
-    quality = Column(String(50))  # Calidad de la muestra
-    seals = Column(String(100))  # Información de sellos
-    operator = Column(String(100))  # Operador responsable
-    date_created = Column(Date)  # Fecha de creación de la muestra
-    time_created = Column(Time)  # Hora de creación de la muestra
-    details = Column(Text)  # Detalles adicionales
-    observations = Column(Text)  # Observaciones
+    sample_code = Column(String(50), unique=True, nullable=False, index=True)
+    description = Column(Text)
+    extraction_date = Column(Date)  # Fecha de extracción de la muestra
+    quantity = Column(Float, default=0.0)  # Cantidad de la muestra
+    unit = Column(String(10), default="g")  # Unidad de medida (gramos por defecto)
+    
+    # Estado de la muestra
+    status = Column(String(20), default="EXTRACTED")  # EXTRACTED, TESTED, DESTROYED, STORED
+    
+    # Información de laboratorio
+    lab_notes = Column(Text)  # Notas del laboratorio
+    test_results = Column(Text)  # Resultados de pruebas (JSON o texto)
+    tested_date = Column(Date)  # Fecha de análisis
+    
+    # Control
     active_status = Column(Boolean, default=True, nullable=False)
     
     # Campos de auditoría
     created_at = Column(DateTime, default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     
-    # Relaciones
-    batch = relationship("Batch", back_populates="samples")
+    # Relaciones (se configurarán cuando tengamos todos los modelos)
+    # batch = relationship("Batch", back_populates="samples")
     
     def __repr__(self):
-        return f"<Sample(number='{self.sample_number}', batch='{self.batch.batch_number if self.batch else None}')>"
+        return f"<Sample(code='{self.sample_code}', batch_id={self.batch_id}, quantity={self.quantity})>"
     
     def __str__(self):
-        return f"{self.sample_number} - {self.batch.batch_number if self.batch else 'Sin lote'}"
+        return f"{self.sample_code} - {self.quantity}{self.unit}"
     
     @property
     def batch_number(self):
         """Número del lote"""
-        return self.batch.batch_number if self.batch else "Sin lote"
+        return f"Lote ID: {self.batch_id}"
+        # return self.batch.batch_number if self.batch else f"Lote ID: {self.batch_id}"
     
     @property
     def mine_name(self):
         """Nombre de la mina (a través del lote)"""
-        return self.batch.mine.name if self.batch and self.batch.mine else "Sin mina"
+        return "Sin mina"
+        # return self.batch.mine_name if self.batch else "Sin mina"
     
     @property
     def client_name(self):
-        """Nombre del cliente (a través del lote y la mina)"""
-        if self.batch and self.batch.mine and self.batch.mine.client:
-            return self.batch.mine.client.name
+        """Nombre del cliente (a través del lote y mina)"""
         return "Sin cliente"
+        # return self.batch.client_name if self.batch else "Sin cliente"
     
     @property
-    def warehouse_code(self):
-        """Código de la bodega (a través del lote)"""
-        return self.batch.warehouse.code if self.batch and self.batch.warehouse else "Sin bodega"
+    def is_tested(self):
+        """Verificar si la muestra fue analizada"""
+        return self.status in ["TESTED", "DESTROYED"] and self.tested_date is not None
     
     @property
-    def warehouse_name(self):
-        """Nombre de la bodega (a través del lote)"""
-        return self.batch.warehouse.name if self.batch and self.batch.warehouse else "Sin bodega"
+    def is_active(self):
+        """Verificar si la muestra está activa"""
+        return self.active_status and self.status not in ["DESTROYED"]
     
     @property
-    def mine_code(self):
-        """Código de la mina"""
-        return self.batch.mine.code if self.batch and self.batch.mine else "Sin código"
+    def days_since_extraction(self):
+        """Días desde la extracción"""
+        if not self.extraction_date:
+            return None
+        from datetime import date
+        return (date.today() - self.extraction_date).days
     
     @property
-    def client_code(self):
-        """Código del cliente"""
-        if self.batch and self.batch.mine and self.batch.mine.client:
-            return self.batch.mine.client.code
-        return "Sin código"
+    def days_since_test(self):
+        """Días desde el análisis"""
+        if not self.tested_date:
+            return None
+        from datetime import date
+        return (date.today() - self.tested_date).days
     
-    @property
-    def full_hierarchy(self):
-        """Jerarquía completa: Cliente → Mina → Lote → Muestra"""
-        return {
-            "client": {
-                "id": self.batch.mine.client.id if self.batch and self.batch.mine and self.batch.mine.client else None,
-                "name": self.client_name,
-                "code": self.client_code
-            },
-            "mine": {
-                "id": self.batch.mine.id if self.batch and self.batch.mine else None,
-                "name": self.mine_name,
-                "code": self.mine_code
-            },
-            "batch": {
-                "id": self.batch.id if self.batch else None,
-                "number": self.batch_number
-            },
-            "warehouse": {
-                "id": self.batch.warehouse.id if self.batch and self.batch.warehouse else None,
-                "code": self.warehouse_code,
-                "name": self.warehouse_name
-            }
-        }
+    def mark_as_tested(self, test_results: str = None, lab_notes: str = None):
+        """Marcar muestra como analizada"""
+        from datetime import date
+        self.status = "TESTED"
+        self.tested_date = date.today()
+        if test_results:
+            self.test_results = test_results
+        if lab_notes:
+            self.lab_notes = lab_notes
     
-    @property
-    def datetime_created(self):
-        """Fecha y hora combinadas de creación"""
-        if self.date_created and self.time_created:
-            from datetime import datetime, time
-            return datetime.combine(self.date_created, self.time_created)
-        elif self.date_created:
-            return self.date_created
-        return None
+    def mark_as_destroyed(self, reason: str = None):
+        """Marcar muestra como destruida"""
+        self.status = "DESTROYED"
+        if reason:
+            self.lab_notes = f"{self.lab_notes or ''}\nDestruida: {reason}".strip()
     
-    def update_batch_quantity(self, old_quantity: float = None):
-        """Actualizar la cantidad restante del lote al cambiar la muestra"""
-        if not self.batch:
-            return
-        
-        # Si es una muestra nueva
-        if old_quantity is None and self.quantity:
-            self.batch.extract_quantity(self.quantity)
-        
-        # Si se modificó la cantidad
-        elif old_quantity is not None and self.quantity:
-            difference = self.quantity - old_quantity
-            if difference > 0:
-                # Se aumentó la cantidad de la muestra
-                self.batch.extract_quantity(difference)
-            elif difference < 0:
-                # Se disminuyó la cantidad de la muestra
-                self.batch.restore_quantity(abs(difference))
-    
-    def restore_to_batch(self):
-        """Restaurar la cantidad de la muestra al lote (al eliminar la muestra)"""
-        if self.batch and self.quantity:
-            self.batch.restore_quantity(self.quantity)
-    
-    def can_be_created(self) -> tuple[bool, str]:
-        """Verificar si la muestra puede ser creada"""
-        if not self.batch:
-            return False, "No se ha especificado un lote"
-        
-        if not self.batch.active_status:
-            return False, "El lote no está activo"
-        
-        if self.quantity and not self.batch.can_extract_quantity(self.quantity):
-            return False, f"Cantidad insuficiente en el lote. Disponible: {self.batch.remaining_quantity} {self.batch.unit}"
-        
-        return True, "OK"
+    def can_be_deleted(self):
+        """Verificar si la muestra puede ser eliminada"""
+        return self.status == "DESTROYED" or not self.is_tested
     
     def to_dict(self, include_relations=False):
         """Convertir a diccionario para serialización"""
         data = {
             "id": self.id,
             "batch_id": self.batch_id,
-            "sample_number": self.sample_number,
-            "weight": self.weight,
+            "sample_code": self.sample_code,
+            "description": self.description,
+            "extraction_date": self.extraction_date.isoformat() if self.extraction_date else None,
             "quantity": self.quantity,
             "unit": self.unit,
-            "quality": self.quality,
-            "seals": self.seals,
-            "operator": self.operator,
-            "date_created": self.date_created.isoformat() if self.date_created else None,
-            "time_created": self.time_created.isoformat() if self.time_created else None,
-            "datetime_created": self.datetime_created.isoformat() if self.datetime_created else None,
-            "details": self.details,
-            "observations": self.observations,
+            "status": self.status,
+            "lab_notes": self.lab_notes,
+            "test_results": self.test_results,
+            "tested_date": self.tested_date.isoformat() if self.tested_date else None,
             "active_status": self.active_status,
+            "is_tested": self.is_tested,
+            "is_active": self.is_active,
+            "days_since_extraction": self.days_since_extraction,
+            "days_since_test": self.days_since_test,
             "batch_number": self.batch_number,
             "mine_name": self.mine_name,
             "client_name": self.client_name,
-            "warehouse_code": self.warehouse_code,
-            "warehouse_name": self.warehouse_name,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None
         }
         
         if include_relations:
-            data["batch"] = self.batch.to_dict() if self.batch else None
-            data["full_hierarchy"] = self.full_hierarchy
+            data["batch"] = None  # Configurar cuando tengamos las relaciones
             
         return data
