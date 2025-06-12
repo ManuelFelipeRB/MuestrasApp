@@ -3,7 +3,7 @@ Configuración de la base de datos SQLAlchemy para el sistema de inventario
 """
 from sqlalchemy import create_engine, event
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Query
 from sqlalchemy.pool import StaticPool
 import logging
 from config import DATABASE_CONFIG
@@ -36,6 +36,27 @@ SessionLocal = sessionmaker(
     autoflush=False,
     bind=engine
 )
+
+class ActiveFilterMixin:
+    """Mixin para agregar filtros de active_status automáticamente"""
+    
+    @classmethod
+    def active_query(cls, session):
+        """Query que solo devuelve registros activos (active_status = 1)"""
+        return session.query(cls).filter(cls.active_status == 1)
+    
+    @classmethod
+    def all_query(cls, session):
+        """Query que devuelve todos los registros (incluyendo inactivos)"""
+        return session.query(cls)
+    
+    @classmethod
+    def get_active_by_id(cls, session, record_id):
+        """Obtener registro activo por ID"""
+        return session.query(cls).filter(
+            cls.id == record_id,
+            cls.active_status == 1
+        ).first()
 
 class DatabaseManager:
     """Gestor de la base de datos"""
@@ -104,6 +125,81 @@ class DatabaseManager:
             raise
         finally:
             DatabaseManager.close_session(session)
+    
+    @staticmethod
+    def get_active_records(model_class, session=None):
+        """Método genérico para obtener solo registros activos"""
+        if session is None:
+            session = DatabaseManager.get_session()
+            close_session = True
+        else:
+            close_session = False
+        
+        try:
+            # Verificar si el modelo tiene active_status
+            if hasattr(model_class, 'active_status'):
+                records = session.query(model_class).filter(model_class.active_status == 1).all()
+            else:
+                # Si no tiene active_status, devolver todos
+                records = session.query(model_class).all()
+            
+            return records
+        except Exception as e:
+            logger.error(f"Error obteniendo registros activos de {model_class.__name__}: {e}")
+            return []
+        finally:
+            if close_session:
+                DatabaseManager.close_session(session)
+    
+    @staticmethod
+    def soft_delete(model_class, record_id, session=None):
+        """Eliminación lógica: cambiar active_status a 0"""
+        if session is None:
+            session = DatabaseManager.get_session()
+            close_session = True
+        else:
+            close_session = False
+        
+        try:
+            record = session.query(model_class).filter(model_class.id == record_id).first()
+            if record and hasattr(record, 'active_status'):
+                record.active_status = 0
+                session.commit()
+                logger.info(f"Registro {record_id} de {model_class.__name__} marcado como inactivo")
+                return True
+            return False
+        except Exception as e:
+            session.rollback()
+            logger.error(f"Error en eliminación lógica de {model_class.__name__}: {e}")
+            return False
+        finally:
+            if close_session:
+                DatabaseManager.close_session(session)
+    
+    @staticmethod
+    def restore_record(model_class, record_id, session=None):
+        """Restaurar registro: cambiar active_status a 1"""
+        if session is None:
+            session = DatabaseManager.get_session()
+            close_session = True
+        else:
+            close_session = False
+        
+        try:
+            record = session.query(model_class).filter(model_class.id == record_id).first()
+            if record and hasattr(record, 'active_status'):
+                record.active_status = 1
+                session.commit()
+                logger.info(f"Registro {record_id} de {model_class.__name__} restaurado")
+                return True
+            return False
+        except Exception as e:
+            session.rollback()
+            logger.error(f"Error restaurando registro de {model_class.__name__}: {e}")
+            return False
+        finally:
+            if close_session:
+                DatabaseManager.close_session(session)
 
 # Función para obtener sesión de DB (dependency injection para FastAPI)
 def get_db():

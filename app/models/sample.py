@@ -23,8 +23,15 @@ class Sample(Base):
     quantity = Column(Float, default=0.0)  # Cantidad de la muestra
     unit = Column(String(10), default="g")  # Unidad de medida (gramos por defecto)
     
-    # Estado de la muestra
-    status = Column(String(20), default="EXTRACTED")  # EXTRACTED, TESTED, DESTROYED, STORED
+    # CAMPOS ESPECÍFICOS DEL SISTEMA DE MUESTRAS
+    client_id = Column(Integer, ForeignKey("clients.id"), nullable=True, index=True)  # Cliente
+    warehouse_id = Column(Integer, ForeignKey("warehouses.id"), nullable=True, index=True)  # Bodega actual
+    seal_code = Column(String(50))  # Código del sello físico
+    storage_location = Column(String(100))  # Ubicación específica dentro de bodega
+    observations = Column(Text)  # Observaciones específicas de la muestra
+    
+    # Estado de la muestra - ESTADOS ESPECÍFICOS DEL FLUJO
+    status = Column(String(20), default="CUSTODY")  # CUSTODY, IN_LAB, TESTED, INACTIVE
     
     # Información de laboratorio
     lab_notes = Column(Text)  # Notas del laboratorio

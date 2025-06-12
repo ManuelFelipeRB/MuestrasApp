@@ -4,63 +4,89 @@ Aplicación principal de Flet - Versión corregida
 import flet as ft
 
 def main(page: ft.Page):
-    """Función principal de la aplicación Flet"""
-    page.title = "Sistema de Inventario - Laboratorio"
+    """Función principal con interfaz CRUD"""
+    page.title = "Sistema de Control de Inventario - Muestras"
     page.window_width = 1200
     page.window_height = 800
+    page.theme_mode = ft.ThemeMode.LIGHT
+    page.padding = 20
     
-    # Interfaz temporal simple
-    page.add(
-        ft.Container(
+    try:
+        from app.ui.samples_view import SamplesView
+        samples_view = SamplesView(page)
+        page.add(samples_view.get_view())
+        page.update()
+    except Exception as e:
+        page.add(ft.Container(
             content=ft.Column([
-                ft.Text(
-                    "🧪 Sistema de Control de Inventario de Laboratorio",
-                    size=24,
-                    weight=ft.FontWeight.BOLD,
-                    color=ft.Colors.BLUE_700  # Corregido: Colors con mayúscula
-                ),
-                ft.Divider(height=20),
-                ft.Text(
-                    "✅ Base de datos inicializada correctamente",
-                    size=16,
-                    color=ft.Colors.GREEN_700  # Corregido: Colors con mayúscula
-                ),
-                ft.Text(
-                    "✅ Bodegas fijas creadas: W01, W022, W03, W04",
-                    size=16,
-                    color=ft.Colors.GREEN_700  # Corregido: Colors con mayúscula
-                ),
-                ft.Text(
-                    "🚧 Interfaz completa en desarrollo...",
-                    size=16,
-                    color=ft.Colors.ORANGE_700  # Corregido: Colors con mayúscula
-                ),
-                ft.Divider(height=20),
-                ft.ElevatedButton(
-                    "Probar Conexión BD",
-                    on_click=lambda _: test_database_connection(page)
-                ),
-                ft.ElevatedButton(
-                    "Probar Modelo Client",
-                    on_click=lambda _: test_client_model(page)
-                ),
-                ft.ElevatedButton(
-                    "Probar Modelo Mine",
-                    on_click=lambda _: test_mine_model(page)
-                ),
-                ft.ElevatedButton(
-                    "Probar Modelo Batch",
-                    on_click=lambda _: test_batch_model(page)
-                ),
-                ft.ElevatedButton(
-                    "Probar Modelo Sample",
-                    on_click=lambda _: test_sample_model(page)
-                )
+                ft.Text(f"❌ Error: {str(e)}", size=16, color=ft.Colors.RED),
+                ft.Text("Verificar archivos:", size=14),
+                ft.Text("• app/ui/samples_view.py", size=12),
+                ft.Text("• app/services/sample_service.py", size=12)
             ]),
-            padding=30,
-            alignment=ft.alignment.center
-        )
-    )
+            padding=20
+        ))
+        page.update()
+
+
+# def main(page: ft.Page):
+#     """Función principal de la aplicación Flet"""
+#     page.title = "Sistema de Inventario - Laboratorio"
+#     page.window_width = 1200
+#     page.window_height = 800
+    
+#     # Interfaz temporal simple
+#     page.add(
+#         ft.Container(
+#             content=ft.Column([
+#                 ft.Text(
+#                     "🧪 Sistema de Control de Inventario de Laboratorio",
+#                     size=24,
+#                     weight=ft.FontWeight.BOLD,
+#                     color=ft.Colors.BLUE_700  # Corregido: Colors con mayúscula
+#                 ),
+#                 ft.Divider(height=20),
+#                 ft.Text(
+#                     "✅ Base de datos inicializada correctamente",
+#                     size=16,
+#                     color=ft.Colors.GREEN_700  # Corregido: Colors con mayúscula
+#                 ),
+#                 ft.Text(
+#                     "✅ Bodegas fijas creadas: W01, W022, W03, W04",
+#                     size=16,
+#                     color=ft.Colors.GREEN_700  # Corregido: Colors con mayúscula
+#                 ),
+#                 ft.Text(
+#                     "🚧 Interfaz completa en desarrollo...",
+#                     size=16,
+#                     color=ft.Colors.ORANGE_700  # Corregido: Colors con mayúscula
+#                 ),
+#                 ft.Divider(height=20),
+#                 ft.ElevatedButton(
+#                     "Probar Conexión BD",
+#                     on_click=lambda _: test_database_connection(page)
+#                 ),
+#                 ft.ElevatedButton(
+#                     "Probar Modelo Client",
+#                     on_click=lambda _: test_client_model(page)
+#                 ),
+#                 ft.ElevatedButton(
+#                     "Probar Modelo Mine",
+#                     on_click=lambda _: test_mine_model(page)
+#                 ),
+#                 ft.ElevatedButton(
+#                     "Probar Modelo Batch",
+#                     on_click=lambda _: test_batch_model(page)
+#                 ),
+#                 ft.ElevatedButton(
+#                     "Probar Modelo Sample",
+#                     on_click=lambda _: test_sample_model(page)
+#                 )
+#             ]),
+#             padding=30,
+#             alignment=ft.alignment.center
+#         )
+#     )
 
 def test_database_connection(page):
     """Probar conexión a la base de datos"""
