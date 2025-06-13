@@ -1,16 +1,14 @@
 """
 Script principal para ejecutar el Sistema de Inventario de Laboratorio
-Versión simplificada sin conflictos de asyncio
+Versión simplificada sin conflictos de threading
 """
 import sys
+import flet as ft
 import logging
 from pathlib import Path
 
 # Agregar el directorio raíz al path de Python
 sys.path.append(str(Path(__file__).parent))
-
-from app.models.database import initialize_database
-from config import FLET_CONFIG
 
 # Configurar logging
 logging.basicConfig(
@@ -31,6 +29,7 @@ def setup_project_structure():
         "app/utils",
         "app/views",
         "app/views/components",
+        "app/ui",  # ← DIRECTORIO PARA UI
         "database"
     ]
     
@@ -46,7 +45,8 @@ def setup_project_structure():
         "app/services/__init__.py",
         "app/utils/__init__.py",
         "app/views/__init__.py",
-        "app/views/components/__init__.py"
+        "app/views/components/__init__.py",
+        "app/ui/__init__.py"  # ← INIT PARA UI
     ]
     
     for init_file in init_files:
@@ -54,79 +54,65 @@ def setup_project_structure():
     
     logger.info("Estructura del proyecto creada")
 
-def start_flet_app():
-    """Iniciar la aplicación Flet"""
-    import flet as ft
-    
-    try:
-        logger.info("Iniciando aplicación Flet...")
-        
-        # Importar la aplicación principal
-        from app.main import main
-        
-        # Ejecutar la aplicación Flet (versión simplificada)
-        ft.app(
-            target=main,
-            name=FLET_CONFIG["page_title"],
-            port=8080
-        )
-        
-    except Exception as e:
-        logger.error(f"Error al iniciar aplicación Flet: {e}")
-
-def run_application():
-    """Ejecutar la aplicación completa (sin asyncio)"""
+def initialize_app():
+    """Inicializar la aplicación (base de datos, etc.)"""
     try:
         # 1. Configurar estructura del proyecto
         setup_project_structure()
         
         # 2. Inicializar base de datos
         logger.info("Inicializando base de datos...")
+        from app.models.database import initialize_database
+        
         if not initialize_database():
             logger.error("Error en inicialización de base de datos")
             return False
         
         # 3. Verificar que la base esté funcionando
         logger.info("Verificando base de datos...")
-        try:
-            from app.models.database import DatabaseManager
-            session = DatabaseManager.get_session()
-            
-            # Verificar que las bodegas estén creadas
-            from app.utils.constants import FIXED_WAREHOUSES
-            logger.info(f"Bodegas configuradas: {len(FIXED_WAREHOUSES)}")
-            
-            DatabaseManager.close_session(session)
-            logger.info("Base de datos verificada correctamente")
-            
-        except Exception as e:
-            logger.warning(f"Verificación de base de datos falló: {e}")
+        from app.models.database import DatabaseManager
+        from app.utils.constants import FIXED_WAREHOUSES
         
-        # 4. Iniciar aplicación Flet
-        logger.info("Sistema listo. Iniciando interfaz...")
-        start_flet_app()
+        session = DatabaseManager.get_session()
+        logger.info(f"Bodegas configuradas: {len(FIXED_WAREHOUSES)}")
+        DatabaseManager.close_session(session)
+        logger.info("Base de datos verificada correctamente")
         
         return True
         
     except Exception as e:
-        logger.error(f"Error crítico en la aplicación: {e}")
+        logger.error(f"Error en inicialización: {e}")
         return False
 
-def main():
-    """Función principal"""
+def main(page: ft.Page):
+    """Función principal de Flet"""
     logger.info("=== Sistema de Control de Inventario de Laboratorio ===")
     logger.info("Iniciando aplicación...")
     
     try:
-        # Ejecutar la aplicación (sin asyncio)
-        run_application()
+        # Inicializar la aplicación
+        if not initialize_app():
+            page.add(ft.Text("❌ Error en inicialización", color=ft.Colors.RED))
+            page.update()
+            return
         
-    except KeyboardInterrupt:
-        logger.info("Aplicación interrumpida por el usuario")
+        logger.info("Sistema listo. Iniciando interfaz...")
+        
+        # Importar y ejecutar la aplicación principal
+        from app.main import main as app_main
+        app_main(page)
+        
     except Exception as e:
-        logger.error(f"Error inesperado: {e}")
-    finally:
-        logger.info("Aplicación finalizada")
+        logger.error(f"Error crítico en la aplicación: {e}")
+        page.add(ft.Container(
+            content=ft.Column([
+                ft.Text(f"❌ Error: {str(e)}", size=16, color=ft.Colors.RED),
+                ft.Text("Verificar estructura del proyecto", size=14),
+            ]),
+            padding=20
+        ))
+        page.update()
 
 if __name__ == "__main__":
-    main()
+    
+    ft.app(target=main, view=ft.WEB_BROWSER, port=8080)

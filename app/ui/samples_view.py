@@ -1,5 +1,5 @@
 """
-Vista mejorada para gestión de muestras - CRUD completo con tabla simple
+Vista mejorada para gestión de muestras - CRUD completo con sistema de pestañas
 """
 import flet as ft
 from datetime import datetime, date
@@ -8,6 +8,233 @@ from app.services.client_service import ClientService
 from app.services.mine_service import MineService
 from app.services.warehouse_service import WarehouseService
 from app.services.batch_service import BatchService
+
+class SamplePrintManager:
+    """Clase para manejar la impresión de datos de muestras"""
+    
+    @staticmethod
+    def print_sample_data(page: ft.Page, sample_data: dict):
+        """Imprimir datos de la muestra usando el API de impresión del navegador"""
+        
+        # Crear contenido HTML para impresión
+        html_content = SamplePrintManager.generate_print_html(sample_data)
+        
+        # Crear ventana emergente para impresión
+        print_dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("🖨️ Vista Previa de Impresión"),
+            content=ft.Container(
+                content=ft.Column([
+                    ft.Text("Se abrirá la ventana de impresión del navegador", 
+                           size=14, color=ft.Colors.BLUE_GREY_600),
+                    ft.Divider(),
+                    # Vista previa del contenido
+                    ft.Container(
+                        content=ft.Column([
+                            ft.Text("ETIQUETA DE MUESTRA", size=16, weight=ft.FontWeight.BOLD),
+                            ft.Divider(),
+                            ft.Text(f"Código: {sample_data.get('sample_code', '')}", size=12),
+                            ft.Text(f"Cliente: {sample_data.get('client_name', '')}", size=12),
+                            ft.Text(f"Fecha extracción: {sample_data.get('extraction_date', '')}", size=12),
+                            ft.Text(f"Almacén: {sample_data.get('warehouse_name', '')}", size=12),
+                            ft.Text(f"Lote: {sample_data.get('batch_name', '')}", size=12),
+                            ft.Text(f"Estado: {sample_data.get('status', '')}", size=12),
+                            ft.Text(f"Cantidad: {sample_data.get('quantity', '')} {sample_data.get('unit', '')}", size=12),
+                            ft.Text(f"Código Sello: {sample_data.get('seal_code', '')}", size=12),
+                        ], spacing=5),
+                        bgcolor=ft.Colors.GREY_50,
+                        padding=ft.padding.all(15),
+                        border_radius=5,
+                        border=ft.border.all(1, ft.Colors.GREY_300)
+                    )
+                ], spacing=10),
+                width=400,
+                height=300
+            ),
+            actions=[
+                ft.ElevatedButton(
+                    "❌ Cancelar", 
+                    bgcolor=ft.Colors.GREY_100, 
+                    on_click=lambda _: SamplePrintManager.close_print_dialog(page, print_dialog)
+                ),
+                ft.ElevatedButton(
+                    "🖨️ Imprimir", 
+                    bgcolor=ft.Colors.BLUE_600, 
+                    color=ft.Colors.WHITE,
+                    on_click=lambda _: SamplePrintManager.execute_print(page, print_dialog, html_content)
+                )
+            ],
+            actions_alignment=ft.MainAxisAlignment.END
+        )
+        
+        # Mostrar diálogo
+        page.overlay.append(print_dialog)
+        print_dialog.open = True
+        page.update()
+    
+    @staticmethod
+    def generate_print_html(sample_data: dict) -> str:
+        """Generar HTML optimizado para impresión"""
+        html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Etiqueta de Muestra - {sample_data.get('sample_code', '')}</title>
+            <style>
+                @media print {{
+                    @page {{
+                        size: A6;
+                        margin: 10mm;
+                    }}
+                    body {{
+                        font-family: Arial, sans-serif;
+                        font-size: 10pt;
+                        line-height: 1.2;
+                        margin: 0;
+                        padding: 0;
+                    }}
+                }}
+                body {{
+                    font-family: Arial, sans-serif;
+                    max-width: 300px;
+                    margin: 0 auto;
+                    padding: 10px;
+                    border: 2px solid #333;
+                }}
+                .header {{
+                    text-align: center;
+                    font-weight: bold;
+                    font-size: 14pt;
+                    margin-bottom: 10px;
+                    border-bottom: 1px solid #333;
+                    padding-bottom: 5px;
+                }}
+                .field {{
+                    margin: 3px 0;
+                    display: flex;
+                    justify-content: space-between;
+                }}
+                .label {{
+                    font-weight: bold;
+                    width: 45%;
+                }}
+                .value {{
+                    width: 50%;
+                    text-align: right;
+                }}
+                .code {{
+                    font-size: 12pt;
+                    font-weight: bold;
+                    text-align: center;
+                    margin: 10px 0;
+                    padding: 5px;
+                    border: 1px solid #333;
+                }}
+                .footer {{
+                    margin-top: 15px;
+                    font-size: 8pt;
+                    text-align: center;
+                    border-top: 1px solid #333;
+                    padding-top: 5px;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="header">ETIQUETA DE MUESTRA</div>
+            
+            <div class="code">{sample_data.get('sample_code', '')}</div>
+            
+            <div class="field">
+                <span class="label">Cliente:</span>
+                <span class="value">{sample_data.get('client_name', '')}</span>
+            </div>
+            
+            <div class="field">
+                <span class="label">Fecha extracción:</span>
+                <span class="value">{sample_data.get('extraction_date', '')}</span>
+            </div>
+            
+            <div class="field">
+                <span class="label">Almacén:</span>
+                <span class="value">{sample_data.get('warehouse_name', '')}</span>
+            </div>
+            
+            <div class="field">
+                <span class="label">Lote:</span>
+                <span class="value">{sample_data.get('batch_name', '')}</span>
+            </div>
+            
+            <div class="field">
+                <span class="label">Estado:</span>
+                <span class="value">{sample_data.get('status', '')}</span>
+            </div>
+            
+            <div class="field">
+                <span class="label">Cantidad:</span>
+                <span class="value">{sample_data.get('quantity', '')} {sample_data.get('unit', '')}</span>
+            </div>
+            
+            <div class="field">
+                <span class="label">Sello:</span>
+                <span class="value">{sample_data.get('seal_code', '')}</span>
+            </div>
+            
+            <div class="footer">
+                Impreso: {datetime.now().strftime("%d/%m/%Y %H:%M")}
+            </div>
+            
+            <script>
+                window.onload = function() {{
+                    window.print();
+                    window.onafterprint = function() {{
+                        window.close();
+                    }};
+                }};
+            </script>
+        </body>
+        </html>
+        """
+        return html
+    
+    @staticmethod
+    def execute_print(page: ft.Page, print_dialog, html_content: str):
+        """Ejecutar la impresión"""
+        try:
+            # Usar JavaScript para abrir ventana de impresión
+            page.run_javascript(f"""
+                var printWindow = window.open('', '_blank', 'width=600,height=400');
+                printWindow.document.write(`{html_content}`);
+                printWindow.document.close();
+            """)
+            
+            # Cerrar diálogo
+            SamplePrintManager.close_print_dialog(page, print_dialog)
+            
+            # Mostrar mensaje de éxito
+            snack = ft.SnackBar(
+                content=ft.Text("🖨️ Enviado a impresora", color=ft.Colors.WHITE),
+                bgcolor=ft.Colors.GREEN_600
+            )
+            page.overlay.append(snack)
+            snack.open = True
+            page.update()
+            
+        except Exception as e:
+            # Mostrar mensaje de error
+            snack = ft.SnackBar(
+                content=ft.Text(f"Error al imprimir: {str(e)}", color=ft.Colors.WHITE),
+                bgcolor=ft.Colors.RED_600
+            )
+            page.overlay.append(snack)
+            snack.open = True
+            page.update()
+    
+    @staticmethod
+    def close_print_dialog(page: ft.Page, print_dialog):
+        """Cerrar diálogo de impresión"""
+        print_dialog.open = False
+        page.update()
 
 class SamplesView:
     def __init__(self, page: ft.Page):
@@ -36,14 +263,13 @@ class SamplesView:
                 ft.dropdown.Option("DEVUELTA", "Devuelta")
             ]
         )
-
-        # Controles principales
+    
         self.btn_new = ft.ElevatedButton(
             "Nueva Muestra",
             icon=ft.Icons.ADD,
             icon_color=ft.Colors.WHITE70,
             on_click=self.handle_new_click,
-            bgcolor=ft.Colors.PURPLE,#BLUE_300,
+            bgcolor=ft.Colors.PURPLE,
             color=ft.Colors.WHITE
         )
         
@@ -53,7 +279,7 @@ class SamplesView:
             icon_color=ft.Colors.WHITE70,
             on_click=self.handle_edit_click,
             disabled=True,
-            bgcolor=ft.Colors.PURPLE,#ORANGE_300,
+            bgcolor=ft.Colors.PURPLE,
             color=ft.Colors.WHITE
         )
         
@@ -63,7 +289,7 @@ class SamplesView:
             icon_color=ft.Colors.WHITE70,
             on_click=self.confirm_delete_sample,
             disabled=True,
-            bgcolor=ft.Colors.PURPLE,#RED_300,
+            bgcolor=ft.Colors.PURPLE,
             color=ft.Colors.WHITE
         )
         
@@ -72,7 +298,7 @@ class SamplesView:
             icon=ft.Icons.REFRESH,
             icon_color=ft.Colors.WHITE70,
             on_click=self.refresh_data,
-            bgcolor=ft.Colors.PURPLE,#GREY_300,
+            bgcolor=ft.Colors.PURPLE,
             color=ft.Colors.WHITE
         )
         
@@ -120,10 +346,73 @@ class SamplesView:
         
         # Cargar datos iniciales
         self.load_samples()
-    
+
     def get_view(self):
-        """Obtener la vista principal"""
-        return ft.Container(
+        """Obtener la vista principal con sistema de pestañas"""
+        
+        # Función para cambiar de pestaña
+        def on_tab_change(e):
+            self.tabs_container.content = self.tabs_content[e.control.selected_index]
+            
+            # Ejecutar función correspondiente según la pestaña seleccionada
+            if e.control.selected_index == 0:
+                self.update_tab_dashboard()
+            elif e.control.selected_index == 1:
+                self.update_tab_samples()
+                
+            self.page.update()
+        
+        # Tabla inicial vacía
+        initial_table = ft.DataTable(
+            columns=[ft.DataColumn(ft.Text("Presione actualizar para cargar datos..."))],
+            rows=[]
+        )
+        
+        # PESTAÑA 1: Dashboard (vacía por ahora)
+        tab1_content = ft.Container(
+            content=ft.Column([
+                ft.Container(
+                    content=ft.Row([
+                        ft.Icon(ft.Icons.DASHBOARD, size=40, color=ft.Colors.PURPLE),
+                        ft.Text(
+                            "Dashboard de Muestras",
+                            size=28,
+                            weight=ft.FontWeight.BOLD,
+                            color=ft.Colors.PURPLE
+                        )
+                    ], spacing=10),
+                    padding=ft.padding.only(bottom=20)
+                ),
+
+                ft.Container(
+                    content=ft.ListView(
+                        controls=[
+                            ft.Text(
+                                "📊 Panel de control en desarrollo...",
+                                size=16,
+                                color=ft.Colors.GREY_600,
+                                text_align=ft.TextAlign.CENTER
+                            )
+                        ],
+                        expand=True,
+                        auto_scroll=True
+                    ),
+                    padding=ft.padding.only(left=0, right=0, bottom=0, top=20),
+                    bgcolor=ft.colors.BLUE_GREY_50,
+                    border_radius=10,
+                    expand=True,
+                    height=400,
+                ),
+            ]),
+            padding=20,
+            bgcolor=ft.colors.TRANSPARENT,
+            border_radius=10,
+            border=ft.border.all(1, ft.Colors.GREY_100),
+            expand=True,
+        )
+        
+        # PESTAÑA 2: Gestión de Muestras (contenido actual)
+        tab2_content = ft.Container(
             content=ft.Column([
                 # Encabezado con estadísticas
                 ft.Container(
@@ -168,8 +457,156 @@ class SamplesView:
                 self.table_container
             ], spacing=20),
             padding=20,
-            expand=True
+            bgcolor=ft.colors.TRANSPARENT,
+            border_radius=10,
+            border=ft.border.all(1, ft.Colors.GREY_100),
+            expand=True,
         )
+        
+        # Guardar contenido de pestañas
+        self.tabs_content = [tab1_content, tab2_content]
+        
+        # Contenedor para el contenido de las pestañas (inicialmente muestra la primera)
+        self.tabs_container = ft.Container(
+            content=self.tabs_content[0],  # Por defecto primera pestaña
+            expand=True,
+        )
+        
+        # Definir las pestañas
+        tabs = ft.Tabs(
+            selected_index=0,
+            animation_duration=200,
+            tabs=[
+                ft.Tab(
+                    tab_content=ft.Text(
+                        "Dashboard",
+                        size=16,
+                        weight=ft.FontWeight.BOLD,
+                        color=ft.Colors.PURPLE,
+                    ),
+                    icon=ft.icons.DASHBOARD,
+                ),
+                ft.Tab(
+                    tab_content=ft.Text(
+                        "Gestión Muestras",
+                        size=16,
+                        weight=ft.FontWeight.BOLD,
+                        color=ft.Colors.PURPLE,
+                    ),
+                    icon=ft.icons.DIAMOND_OUTLINED,
+                ),
+            ],
+            on_change=on_tab_change,
+        )
+        
+        # Vista principal con pestañas
+        return ft.Container(
+            content=ft.Column([
+                # Sistema de pestañas
+                ft.Container(
+                    content=ft.Column(
+                        controls=[
+                            ft.Row(
+                                controls=[
+                                    tabs,  # Las pestañas
+                                    ft.ElevatedButton(
+                                        "Actualizar", 
+                                        on_click=lambda e: self.update_data_callback(),
+                                        icon=ft.icons.REFRESH,
+                                        bgcolor=ft.Colors.PURPLE,
+                                        color=ft.Colors.WHITE
+                                    ),
+                                ],
+                                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                            ),
+                            self.tabs_container,  # Contenedor para mostrar el contenido de la pestaña seleccionada
+                        ],
+                        spacing=10,
+                        expand=True,
+                    ),
+                    bgcolor=ft.colors.TRANSPARENT,
+                    expand=True,
+                )
+            ], spacing=10),
+            padding=ft.padding.only(left=20, right=20, top=10, bottom=10),
+            expand=True,
+        )
+    
+# Métodos para actualización de pestañas
+    def handle_new_click(self, e):
+        """Manejar clic en botón Nueva Muestra"""
+        print("🔥 DEBUG: CLIC DETECTADO EN BOTÓN NUEVA MUESTRA!")
+        try:
+            self.show_new_sample_dialog(e)
+        except Exception as ex:
+            print(f"❌ ERROR en handle_new_click: {str(ex)}")
+    
+    def handle_edit_click(self, e):
+        """Manejar clic en botón Editar"""
+        print("🔥 DEBUG: CLIC DETECTADO EN BOTÓN EDITAR!")
+        try:
+            self.show_edit_sample_dialog(e)
+        except Exception as ex:
+            print(f"❌ ERROR en handle_edit_click: {str(ex)}")
+    
+    def refresh_data(self, e=None):
+        """Actualizar datos"""
+        self.selected_sample = None
+        self.btn_edit.disabled = True
+        self.btn_delete.disabled = True
+        self.load_samples()
+        self.show_success("🔄 Datos actualizados correctamente")
+
+    def show_new_sample_dialog(self, e):
+            """Mostrar diálogo para nueva muestra"""
+            print("🟢 DEBUG: ENTRANDO A show_new_sample_dialog")
+            try:
+                self.show_sample_dialog(None)
+            except Exception as ex:
+                print(f"❌ ERROR en show_new_sample_dialog: {str(ex)}")
+    
+    def show_edit_sample_dialog(self, e):
+        """Mostrar diálogo para editar muestra"""
+        print("🟡 DEBUG: ENTRANDO A show_edit_sample_dialog")
+        try:
+            if self.selected_sample:
+                print(f"🔍 DEBUG: Muestra seleccionada: {self.selected_sample.sample_code}")
+                self.show_sample_dialog(self.selected_sample)
+            else:
+                print("⚠️ DEBUG: No hay muestra seleccionada")
+                self.show_error("Por favor selecciona una muestra para editar")
+        except Exception as ex:
+            print(f"❌ ERROR en show_edit_sample_dialog: {str(ex)}") 
+            
+    def update_tab_dashboard(self):
+        """Actualizar contenido de la pestaña Dashboard"""
+        print("🏠 Actualizando pestaña Dashboard")
+        # Aquí puedes agregar lógica específica para el dashboard
+        pass
+    
+    def update_tab_samples(self):
+        """Actualizar contenido de la pestaña Gestión de Muestras"""
+        print("💎 Actualizando pestaña Gestión de Muestras")
+        self.load_samples()
+    
+    def update_data_callback(self):
+        """Callback para el botón actualizar - ejecuta según pestaña activa"""
+        # Obtener índice de pestaña activa
+        active_tab = 0  # Por defecto dashboard
+        
+        # Buscar el widget Tabs en la página para obtener selected_index
+        # Como no tenemos acceso directo, usaremos la pestaña por defecto o podrías usar una variable de instancia
+        
+        if hasattr(self, 'active_tab_index'):
+            active_tab = self.active_tab_index
+        
+        # Ejecutar función según pestaña activa
+        if active_tab == 0:
+            self.update_tab_dashboard()
+        elif active_tab == 1:
+            self.update_tab_samples()
+        
+        self.show_success("🔄 Datos actualizados correctamente")
     
     def update_stats(self):
         """Actualizar estadísticas del inventario (solo registros activos)"""
@@ -235,7 +672,7 @@ class SamplesView:
                 ft.DataRow(
                     cells=[
                         ft.DataCell(ft.Text("No hay muestras para mostrar", 
-                                          size=14, color=ft.Colors.GREY_600, italic=True)),
+                                        size=14, color=ft.Colors.GREY_600, italic=True)),
                         ft.DataCell(ft.Text("")),
                         ft.DataCell(ft.Text("")),
                         ft.DataCell(ft.Text("")),
@@ -353,30 +790,9 @@ class SamplesView:
         self.btn_delete.disabled = True
         self.load_samples()
         self.show_success("🔄 Datos actualizados correctamente")
-    
-    def show_new_sample_dialog(self, e):
-        """Mostrar diálogo para nueva muestra"""
-        print("🟢 DEBUG: ENTRANDO A show_new_sample_dialog")
-        try:
-            self.show_sample_dialog(None)
-        except Exception as ex:
-            print(f"❌ ERROR en show_new_sample_dialog: {str(ex)}")
-    
-    def show_edit_sample_dialog(self, e):
-        """Mostrar diálogo para editar muestra"""
-        print("🟡 DEBUG: ENTRANDO A show_edit_sample_dialog")
-        try:
-            if self.selected_sample:
-                print(f"🔍 DEBUG: Muestra seleccionada: {self.selected_sample.sample_code}")
-                self.show_sample_dialog(self.selected_sample)
-            else:
-                print("⚠️ DEBUG: No hay muestra seleccionada")
-                self.show_error("Por favor selecciona una muestra para editar")
-        except Exception as ex:
-            print(f"❌ ERROR en show_edit_sample_dialog: {str(ex)}")
-    
+
     def show_sample_dialog(self, sample):
-        """Mostrar diálogo de muestra (crear/editar)"""
+        """Mostrar diálogo de muestra (crear/editar) con botón de impresión"""
         is_edit = sample is not None
         title = "✏️ Editar Muestra" if is_edit else "➕ Nueva Muestra"
         
@@ -415,8 +831,10 @@ class SamplesView:
             value=sample.observations if is_edit else "",
             multiline=True,
             max_lines=3,
-            width=400
+            width=400,
+            height=120
         )
+        
         user_field = ft.TextField(
             label="ID de Usuario *",
             value=str(sample.user) if is_edit and sample.user else "",
@@ -437,7 +855,6 @@ class SamplesView:
             label="Unidad",
             value=sample.unit if is_edit else "g",
             width=180,
-            #expand=True,    
             options=[
                 ft.dropdown.Option("gr"),
                 ft.dropdown.Option("Kg"),
@@ -472,7 +889,7 @@ class SamplesView:
         
         # Cargar datos para dropdowns
         try:
-            # Lotes - datos de ejemplo si el servicio falla
+            # Lotes
             try:
                 batches = BatchService.get_all_batches()
                 batch_dropdown.options = [ft.dropdown.Option(str(b.id), f"{b.batch_number} - {b.description}") for b in batches]
@@ -508,6 +925,32 @@ class SamplesView:
             batch_dropdown.options = [ft.dropdown.Option("1", "Lote-001 - Ejemplo")]
             client_dropdown.options = [ft.dropdown.Option("1", "CLI-001 - Cliente Ejemplo")]
             warehouse_dropdown.options = [ft.dropdown.Option("1", "BOD-001 - Bodega Principal")]
+        
+        def get_selected_text(dropdown):
+            """Obtener el texto del elemento seleccionado en dropdown"""
+            if dropdown.value:
+                for option in dropdown.options:
+                    if option.key == dropdown.value:
+                        return option.text
+            return dropdown.value or ""
+        
+        def print_sample(e):
+            """Callback para imprimir muestra - ¡AQUÍ ESTÁ LA INTEGRACIÓN!"""
+            # Recopilar datos actuales del formulario
+            current_data = {
+                'sample_code': code_field.value,
+                'client_name': get_selected_text(client_dropdown),  # Obtener texto, no ID
+                'extraction_date': extraction_date_field.value,
+                'warehouse_name': get_selected_text(warehouse_dropdown),  # Obtener texto, no ID
+                'batch_name': get_selected_text(batch_dropdown),  # Obtener texto, no ID
+                'status': status_dropdown.value,
+                'quantity': quantity_field.value,
+                'unit': unit_dropdown.value,
+                'seal_code': seal_code_field.value,
+            }
+            
+            # Llamar al manager de impresión
+            SamplePrintManager.print_sample_data(self.page, current_data)
         
         def save_sample(e):
             """Guardar muestra"""
@@ -562,13 +1005,7 @@ class SamplesView:
                 print(f"ERROR guardando muestra: {str(ex)}")
                 self.show_error(f"Error guardando muestra: {str(ex)}")
         
-        def cancel_dialog(e):
-            """Cancelar diálogo"""
-            print("DEBUG: Cancelando diálogo...")
-            dialog.open = False
-            self.page.update()
-        
-        # Crear diálogo
+        # Crear diálogo CON BOTÓN DE IMPRESIÓN
         dialog = ft.AlertDialog(
             modal=True,
             title=ft.Text(title),
@@ -576,19 +1013,32 @@ class SamplesView:
                 content=ft.Column([
                     ft.Row([code_field, client_dropdown, extraction_date_field], expand=True, spacing=10),
                     ft.Divider(),
-                    ft.Row([ warehouse_dropdown, batch_dropdown, status_dropdown], spacing=10),
+                    ft.Row([warehouse_dropdown, batch_dropdown, status_dropdown], spacing=10),
                     ft.Row([quantity_field, unit_dropdown, seal_code_field], spacing=10),
                     ft.Divider(),
-                    ft.Row([storage_location_field, user_field], spacing=10),
-                    description_field,
-                    observations_field
+                    # NOTA: Excluyendo storage_location_field, description_field, observations_field, user_field como solicitaste
                 ], spacing=15, scroll=ft.ScrollMode.AUTO),
                 width=700,
-                height=550
+                height=320  # Altura reducida al quitar campos
             ),
             actions=[
-                ft.ElevatedButton("❌ Cancelar",  bgcolor=ft.Colors.GREY_100, on_click=lambda _: self.close_dialog(dialog)),
-                ft.ElevatedButton("💾 Guardar", on_click=save_sample, bgcolor=ft.Colors.GREEN_600, color=ft.Colors.WHITE)
+                ft.ElevatedButton(
+                    "🖨️ Imprimir", 
+                    bgcolor=ft.Colors.BLUE_600, 
+                    color=ft.Colors.WHITE, 
+                    on_click=print_sample
+                ),
+                ft.ElevatedButton(
+                    "❌ Cancelar", 
+                    bgcolor=ft.Colors.GREY_100, 
+                    on_click=lambda _: self.close_dialog(dialog)
+                ),
+                ft.ElevatedButton(
+                    "💾 Guardar", 
+                    on_click=save_sample, 
+                    bgcolor=ft.Colors.GREEN_600, 
+                    color=ft.Colors.WHITE
+                )
             ],
             actions_alignment=ft.MainAxisAlignment.END
         )
@@ -599,7 +1049,7 @@ class SamplesView:
         print("DEBUG: Actualizando página...")
         self.page.update()
         print("DEBUG: Diálogo debería estar visible ahora")
-    
+
     def confirm_delete_sample(self, e):
         """Confirmar eliminación de muestra"""
         if not self.selected_sample:
