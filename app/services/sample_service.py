@@ -243,22 +243,22 @@ class SampleService:
             # Por estado (solo muestras activas)
             extracted = session.query(Sample).filter(
                 Sample.active_status == 1, 
-                Sample.status == 'EXTRACTED'
+                Sample.status == 'EXTRAIDA'
             ).count()
             
             tested = session.query(Sample).filter(
                 Sample.active_status == 1, 
-                Sample.status == 'TESTED'
+                Sample.status == 'ANALIZADA'
             ).count()
             
             stored = session.query(Sample).filter(
                 Sample.active_status == 1, 
-                Sample.status == 'STORED'
+                Sample.status == 'ALMACENADA'
             ).count()
             
             disposed = session.query(Sample).filter(
                 Sample.active_status == 1, 
-                Sample.status == 'DISPOSED'
+                Sample.status == 'DEVUELTA'
             ).count()
             
             return {

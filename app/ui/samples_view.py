@@ -29,7 +29,7 @@ class SamplesView:
             width=150,
             on_change=self.apply_filters,
             options=[
-                ft.dropdown.Option("", "Todos"),
+                ft.dropdown.Option("ALL", "Todos"),
                 ft.dropdown.Option("EXTRAIDA", "Extraída"),
                 ft.dropdown.Option("ANALIZADA", "Analizada"),
                 ft.dropdown.Option("ALMACENADA", "Almacenada"),
@@ -41,34 +41,38 @@ class SamplesView:
         self.btn_new = ft.ElevatedButton(
             "Nueva Muestra",
             icon=ft.Icons.ADD,
+            icon_color=ft.Colors.WHITE70,
             on_click=self.handle_new_click,
-            bgcolor=ft.Colors.BLUE_600,
+            bgcolor=ft.Colors.PURPLE,#BLUE_300,
             color=ft.Colors.WHITE
         )
         
         self.btn_edit = ft.ElevatedButton(
-            "Editar",
+            "Editar Muestra",
             icon=ft.Icons.EDIT,
+            icon_color=ft.Colors.WHITE70,
             on_click=self.handle_edit_click,
             disabled=True,
-            bgcolor=ft.Colors.ORANGE_600,
+            bgcolor=ft.Colors.PURPLE,#ORANGE_300,
             color=ft.Colors.WHITE
         )
         
         self.btn_delete = ft.ElevatedButton(
-            "Eliminar",
+            "Eliminar Muestra",
             icon=ft.Icons.DELETE,
+            icon_color=ft.Colors.WHITE70,
             on_click=self.confirm_delete_sample,
             disabled=True,
-            bgcolor=ft.Colors.RED_600,
+            bgcolor=ft.Colors.PURPLE,#RED_300,
             color=ft.Colors.WHITE
         )
         
         self.btn_refresh = ft.ElevatedButton(
-            "Actualizar",
+            "Actualizar Lista",
             icon=ft.Icons.REFRESH,
+            icon_color=ft.Colors.WHITE70,
             on_click=self.refresh_data,
-            bgcolor=ft.Colors.GREEN_600,
+            bgcolor=ft.Colors.PURPLE,#GREY_300,
             color=ft.Colors.WHITE
         )
         
@@ -108,9 +112,9 @@ class SamplesView:
         # Contenedor de estadísticas
         self.stats_container = ft.Container(
             content=ft.Text("Cargando estadísticas...", size=12, color=ft.Colors.GREY_600),
-            bgcolor=ft.Colors.PURPLE_50,
-            padding=ft.padding.symmetric(horizontal=15, vertical=8),
-            border_radius=8,
+            bgcolor=ft.Colors.AMBER_50,
+            padding=ft.padding.symmetric(horizontal=10, vertical=8),
+            border_radius=10,
             border=ft.border.all(1, ft.Colors.PURPLE)
         )
         
@@ -126,17 +130,16 @@ class SamplesView:
                     content=ft.Row([
                         # Título y icono
                         ft.Row([
-                            ft.Icon(ft.Icons.SCIENCE, size=40, color=ft.Colors.BLUE_600),
+                            ft.Icon(ft.Icons.DIAMOND_OUTLINED, size=34, color=ft.Colors.PURPLE),
                             ft.Text(
                                 "Gestión Muestras de Mineral",
                                 size=28,
                                 weight=ft.FontWeight.BOLD,
-                                color=ft.Colors.BLUE_700
+                                color=ft.Colors.PURPLE
                             )
                         ], spacing=10),
                         
-                        # Estadísticas en la esquina superior derecha
-                        self.stats_container
+                        self.stats_container # Estadísticas en la esquina superior derecha
                     ], 
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                     vertical_alignment=ft.CrossAxisAlignment.CENTER),
@@ -171,20 +174,15 @@ class SamplesView:
     def update_stats(self):
         """Actualizar estadísticas del inventario (solo registros activos)"""
         try:
-            # Obtener estadísticas del servicio (solo activos)
-            stats = SampleService.get_active_sample_stats()
+            stats = SampleService.get_active_sample_stats() # Obtener estadísticas del servicio (solo activos)
             
-            # Crear texto de estadísticas - SIN mostrar inactivos
-            stats_text = f"📊 Total Activos: {stats['total_active']} | ⛏️ Extraídos: {stats['extracted']} | 🧪 Analizados: {stats['tested']} | 📦 Almacenados: {stats['stored']} "
+            stats_text = f"📊 Total Almacenado: {stats['total_active']} | ⛏️ Extraídos: {stats['extracted']} | 🧪 Analizados: {stats['tested']} | ♻️ Retornadas: {stats['disposed']} "
             
-            # Actualizar contenedor
             self.stats_container.content = ft.Text(
                 stats_text, 
                 size=12, 
                 color=ft.Colors.BLUE_800,
-                #weight=ft.FontWeight.BOLD
             )
-            
             print(f"📊 DEBUG: Estadísticas activos: {stats}")
             
         except Exception as e:
@@ -220,8 +218,8 @@ class SamplesView:
         if self.filter_code.value:
             filtered = [s for s in filtered if self.filter_code.value.lower() in s.sample_code.lower()]
         
-        # Filtro por estado
-        if self.filter_status.value:
+        # Filtro por estado - ¡AQUÍ ESTÁ EL FIX!
+        if self.filter_status.value and self.filter_status.value != "ALL":
             filtered = [s for s in filtered if s.status == self.filter_status.value]
         
         self.filtered_samples = filtered
@@ -389,7 +387,7 @@ class SamplesView:
             label="Código de Muestra *",
             value=sample.sample_code if is_edit else "",
             prefix_icon=ft.Icons.QR_CODE,
-            width=200
+            expand=True
         )
         
         description_field = ft.TextField(
@@ -432,18 +430,19 @@ class SamplesView:
             value=str(sample.quantity) if is_edit else "",
             keyboard_type=ft.KeyboardType.NUMBER,
             prefix_icon=ft.Icons.SCALE,
-            width=150
+            width=180
         )
         
         unit_dropdown = ft.Dropdown(
             label="Unidad",
             value=sample.unit if is_edit else "g",
-            width=100,
+            width=180,
+            #expand=True,    
             options=[
-                ft.dropdown.Option("gr", "Gramos"),
-                ft.dropdown.Option("Kg", "Kilogramos"),
-                ft.dropdown.Option("Ton", "Tonelada"),
-                ft.dropdown.Option("Und", "Unidad")
+                ft.dropdown.Option("gr"),
+                ft.dropdown.Option("Kg"),
+                ft.dropdown.Option("Ton"),
+                ft.dropdown.Option("Und")
             ]
         )
         
@@ -575,9 +574,9 @@ class SamplesView:
             title=ft.Text(title),
             content=ft.Container(
                 content=ft.Column([
-                    ft.Row([code_field, extraction_date_field , status_dropdown], expand=True, spacing=10),
+                    ft.Row([code_field, client_dropdown, extraction_date_field], expand=True, spacing=10),
                     ft.Divider(),
-                    ft.Row([client_dropdown, warehouse_dropdown, batch_dropdown], spacing=10),
+                    ft.Row([ warehouse_dropdown, batch_dropdown, status_dropdown], spacing=10),
                     ft.Row([quantity_field, unit_dropdown, seal_code_field], spacing=10),
                     ft.Divider(),
                     ft.Row([storage_location_field, user_field], spacing=10),
