@@ -1,6 +1,4 @@
-"""
-Vista mejorada para gestión de muestras - CRUD completo con sistema de pestañas
-"""
+
 import flet as ft
 from datetime import datetime, date
 from app.services.sample_service import SampleService
@@ -428,7 +426,7 @@ class SamplesView:
                             )
                         ], spacing=10),
                         
-                        self.stats_container # Estadísticas en la esquina superior derecha
+                        # self.stats_container # Estadísticas en la esquina superior derecha
                     ], 
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                     vertical_alignment=ft.CrossAxisAlignment.CENTER),
@@ -446,7 +444,7 @@ class SamplesView:
                         self.btn_new,
                         self.btn_edit,
                         self.btn_delete,
-                        self.btn_refresh
+                        # self.btn_refresh
                     ], wrap=True, spacing=10),
                     bgcolor=ft.Colors.GREY_50,
                     padding=15,
@@ -509,26 +507,29 @@ class SamplesView:
                             ft.Row(
                                 controls=[
                                     tabs,  # Las pestañas
+                                    self.stats_container, # Estadísticas en la esquina superior derecha
                                     ft.ElevatedButton(
                                         "Actualizar", 
                                         on_click=lambda e: self.update_data_callback(),
                                         icon=ft.icons.REFRESH,
+                                        icon_color=ft.Colors.WHITE70,
                                         bgcolor=ft.Colors.PURPLE,
                                         color=ft.Colors.WHITE
                                     ),
+                                    
                                 ],
                                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                             ),
+                            
                             self.tabs_container,  # Contenedor para mostrar el contenido de la pestaña seleccionada
                         ],
-                        spacing=10,
                         expand=True,
                     ),
                     bgcolor=ft.colors.TRANSPARENT,
                     expand=True,
                 )
             ], spacing=10),
-            padding=ft.padding.only(left=20, right=20, top=10, bottom=10),
+            padding=ft.padding.only(left=10, right=10, top=10, bottom=10),
             expand=True,
         )
     
@@ -811,7 +812,8 @@ class SamplesView:
             value=sample.description if is_edit else "",
             multiline=True,
             max_lines=3,
-            expand=True,
+            width=400,
+            
         )
 
         seal_code_field = ft.TextField(
@@ -831,7 +833,7 @@ class SamplesView:
             value=sample.observations if is_edit else "",
             multiline=True,
             max_lines=3,
-            width=400,
+            expand=True,
             height=120
         )
         
@@ -1016,10 +1018,12 @@ class SamplesView:
                     ft.Row([warehouse_dropdown, batch_dropdown, status_dropdown], spacing=10),
                     ft.Row([quantity_field, unit_dropdown, seal_code_field], spacing=10),
                     ft.Divider(),
-                    # NOTA: Excluyendo storage_location_field, description_field, observations_field, user_field como solicitaste
+                    ft.Row([description_field]),
+                    ft.Row([ observations_field]),
+                    ft.Divider(),
                 ], spacing=15, scroll=ft.ScrollMode.AUTO),
                 width=700,
-                height=320  # Altura reducida al quitar campos
+                height=400,  # Altura reducida al quitar campos
             ),
             actions=[
                 ft.ElevatedButton(
