@@ -1,238 +1,12 @@
 
 import flet as ft
 from datetime import datetime, date
+from app.utils.print_manager import HtmlPrintManager
 from app.services.sample_service import SampleService
 from app.services.client_service import ClientService
 from app.services.mine_service import MineService
 from app.services.warehouse_service import WarehouseService
 from app.services.batch_service import BatchService
-
-class SamplePrintManager:
-    """Clase para manejar la impresión de datos de muestras"""
-    
-    @staticmethod
-    def print_sample_data(page: ft.Page, sample_data: dict):
-        """Imprimir datos de la muestra usando el API de impresión del navegador"""
-        
-        # Crear contenido HTML para impresión
-        html_content = SamplePrintManager.generate_print_html(sample_data)
-        
-        # Crear ventana emergente para impresión
-        print_dialog = ft.AlertDialog(
-            modal=True,
-            title=ft.Text("🖨️ Vista Previa de Impresión"),
-            content=ft.Container(
-                content=ft.Column([
-                    ft.Text("Se abrirá la ventana de impresión del navegador", 
-                           size=14, color=ft.Colors.BLUE_GREY_600),
-                    ft.Divider(),
-                    # Vista previa del contenido
-                    ft.Container(
-                        content=ft.Column([
-                            ft.Text("ETIQUETA DE MUESTRA", size=16, weight=ft.FontWeight.BOLD),
-                            ft.Divider(),
-                            ft.Text(f"Código: {sample_data.get('sample_code', '')}", size=12),
-                            ft.Text(f"Cliente: {sample_data.get('client_name', '')}", size=12),
-                            ft.Text(f"Fecha extracción: {sample_data.get('extraction_date', '')}", size=12),
-                            ft.Text(f"Almacén: {sample_data.get('warehouse_name', '')}", size=12),
-                            ft.Text(f"Lote: {sample_data.get('batch_name', '')}", size=12),
-                            ft.Text(f"Estado: {sample_data.get('status', '')}", size=12),
-                            ft.Text(f"Cantidad: {sample_data.get('quantity', '')} {sample_data.get('unit', '')}", size=12),
-                            ft.Text(f"Código Sello: {sample_data.get('seal_code', '')}", size=12),
-                        ], spacing=5),
-                        bgcolor=ft.Colors.GREY_50,
-                        padding=ft.padding.all(15),
-                        border_radius=5,
-                        border=ft.border.all(1, ft.Colors.GREY_300)
-                    )
-                ], spacing=10),
-                width=400,
-                height=300
-            ),
-            actions=[
-                ft.ElevatedButton(
-                    "❌ Cancelar", 
-                    bgcolor=ft.Colors.GREY_100, 
-                    on_click=lambda _: SamplePrintManager.close_print_dialog(page, print_dialog)
-                ),
-                ft.ElevatedButton(
-                    "🖨️ Imprimir", 
-                    bgcolor=ft.Colors.BLUE_600, 
-                    color=ft.Colors.WHITE,
-                    on_click=lambda _: SamplePrintManager.execute_print(page, print_dialog, html_content)
-                )
-            ],
-            actions_alignment=ft.MainAxisAlignment.END
-        )
-        
-        # Mostrar diálogo
-        page.overlay.append(print_dialog)
-        print_dialog.open = True
-        page.update()
-    
-    @staticmethod
-    def generate_print_html(sample_data: dict) -> str:
-        """Generar HTML optimizado para impresión"""
-        html = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>Etiqueta de Muestra - {sample_data.get('sample_code', '')}</title>
-            <style>
-                @media print {{
-                    @page {{
-                        size: A6;
-                        margin: 10mm;
-                    }}
-                    body {{
-                        font-family: Arial, sans-serif;
-                        font-size: 10pt;
-                        line-height: 1.2;
-                        margin: 0;
-                        padding: 0;
-                    }}
-                }}
-                body {{
-                    font-family: Arial, sans-serif;
-                    max-width: 300px;
-                    margin: 0 auto;
-                    padding: 10px;
-                    border: 2px solid #333;
-                }}
-                .header {{
-                    text-align: center;
-                    font-weight: bold;
-                    font-size: 14pt;
-                    margin-bottom: 10px;
-                    border-bottom: 1px solid #333;
-                    padding-bottom: 5px;
-                }}
-                .field {{
-                    margin: 3px 0;
-                    display: flex;
-                    justify-content: space-between;
-                }}
-                .label {{
-                    font-weight: bold;
-                    width: 45%;
-                }}
-                .value {{
-                    width: 50%;
-                    text-align: right;
-                }}
-                .code {{
-                    font-size: 12pt;
-                    font-weight: bold;
-                    text-align: center;
-                    margin: 10px 0;
-                    padding: 5px;
-                    border: 1px solid #333;
-                }}
-                .footer {{
-                    margin-top: 15px;
-                    font-size: 8pt;
-                    text-align: center;
-                    border-top: 1px solid #333;
-                    padding-top: 5px;
-                }}
-            </style>
-        </head>
-        <body>
-            <div class="header">ETIQUETA DE MUESTRA</div>
-            
-            <div class="code">{sample_data.get('sample_code', '')}</div>
-            
-            <div class="field">
-                <span class="label">Cliente:</span>
-                <span class="value">{sample_data.get('client_name', '')}</span>
-            </div>
-            
-            <div class="field">
-                <span class="label">Fecha extracción:</span>
-                <span class="value">{sample_data.get('extraction_date', '')}</span>
-            </div>
-            
-            <div class="field">
-                <span class="label">Almacén:</span>
-                <span class="value">{sample_data.get('warehouse_name', '')}</span>
-            </div>
-            
-            <div class="field">
-                <span class="label">Lote:</span>
-                <span class="value">{sample_data.get('batch_name', '')}</span>
-            </div>
-            
-            <div class="field">
-                <span class="label">Estado:</span>
-                <span class="value">{sample_data.get('status', '')}</span>
-            </div>
-            
-            <div class="field">
-                <span class="label">Cantidad:</span>
-                <span class="value">{sample_data.get('quantity', '')} {sample_data.get('unit', '')}</span>
-            </div>
-            
-            <div class="field">
-                <span class="label">Sello:</span>
-                <span class="value">{sample_data.get('seal_code', '')}</span>
-            </div>
-            
-            <div class="footer">
-                Impreso: {datetime.now().strftime("%d/%m/%Y %H:%M")}
-            </div>
-            
-            <script>
-                window.onload = function() {{
-                    window.print();
-                    window.onafterprint = function() {{
-                        window.close();
-                    }};
-                }};
-            </script>
-        </body>
-        </html>
-        """
-        return html
-    
-    @staticmethod
-    def execute_print(page: ft.Page, print_dialog, html_content: str):
-        """Ejecutar la impresión"""
-        try:
-            # Usar JavaScript para abrir ventana de impresión
-            page.run_javascript(f"""
-                var printWindow = window.open('', '_blank', 'width=600,height=400');
-                printWindow.document.write(`{html_content}`);
-                printWindow.document.close();
-            """)
-            
-            # Cerrar diálogo
-            SamplePrintManager.close_print_dialog(page, print_dialog)
-            
-            # Mostrar mensaje de éxito
-            snack = ft.SnackBar(
-                content=ft.Text("🖨️ Enviado a impresora", color=ft.Colors.WHITE),
-                bgcolor=ft.Colors.GREEN_600
-            )
-            page.overlay.append(snack)
-            snack.open = True
-            page.update()
-            
-        except Exception as e:
-            # Mostrar mensaje de error
-            snack = ft.SnackBar(
-                content=ft.Text(f"Error al imprimir: {str(e)}", color=ft.Colors.WHITE),
-                bgcolor=ft.Colors.RED_600
-            )
-            page.overlay.append(snack)
-            snack.open = True
-            page.update()
-    
-    @staticmethod
-    def close_print_dialog(page: ft.Page, print_dialog):
-        """Cerrar diálogo de impresión"""
-        print_dialog.open = False
-        page.update()
 
 class SamplesView:
     def __init__(self, page: ft.Page):
@@ -541,14 +315,7 @@ class SamplesView:
             self.show_new_sample_dialog(e)
         except Exception as ex:
             print(f"❌ ERROR en handle_new_click: {str(ex)}")
-    
-    def handle_edit_click(self, e):
-        """Manejar clic en botón Editar"""
-        print("🔥 DEBUG: CLIC DETECTADO EN BOTÓN EDITAR!")
-        try:
-            self.show_edit_sample_dialog(e)
-        except Exception as ex:
-            print(f"❌ ERROR en handle_edit_click: {str(ex)}")
+
     
     def refresh_data(self, e=None):
         """Actualizar datos"""
@@ -951,8 +718,8 @@ class SamplesView:
                 'seal_code': seal_code_field.value,
             }
             
-            # Llamar al manager de impresión
-            SamplePrintManager.print_sample_data(self.page, current_data)
+            # Llamar al manager de impresión - CORREGIDO: Sin pasar self.page
+            HtmlPrintManager.print_sample_data(self.page, current_data)
         
         def save_sample(e):
             """Guardar muestra"""
