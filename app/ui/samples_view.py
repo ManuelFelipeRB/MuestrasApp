@@ -170,14 +170,14 @@ class SamplesView:
                         auto_scroll=True
                     ),
                     padding=ft.padding.only(left=0, right=0, bottom=0, top=20),
-                    bgcolor=ft.colors.BLUE_GREY_50,
+                    bgcolor=ft.Colors.BLUE_GREY_50,
                     border_radius=10,
                     expand=True,
                     height=400,
                 ),
             ]),
             padding=20,
-            bgcolor=ft.colors.TRANSPARENT,
+            bgcolor=ft.Colors.TRANSPARENT,
             border_radius=10,
             border=ft.border.all(1, ft.Colors.GREY_100),
             expand=True,
@@ -229,7 +229,7 @@ class SamplesView:
                 self.table_container
             ], spacing=20),
             padding=20,
-            bgcolor=ft.colors.TRANSPARENT,
+            bgcolor=ft.Colors.TRANSPARENT,
             border_radius=10,
             border=ft.border.all(1, ft.Colors.GREY_100),
             expand=True,
@@ -256,7 +256,7 @@ class SamplesView:
                         weight=ft.FontWeight.BOLD,
                         color=ft.Colors.PURPLE,
                     ),
-                    icon=ft.icons.DASHBOARD,
+                    icon=ft.Icons.DASHBOARD,
                 ),
                 ft.Tab(
                     tab_content=ft.Text(
@@ -265,7 +265,7 @@ class SamplesView:
                         weight=ft.FontWeight.BOLD,
                         color=ft.Colors.PURPLE,
                     ),
-                    icon=ft.icons.DIAMOND_OUTLINED,
+                    icon=ft.Icons.DIAMOND_OUTLINED,
                 ),
             ],
             on_change=on_tab_change,
@@ -285,7 +285,7 @@ class SamplesView:
                                     ft.ElevatedButton(
                                         "Actualizar", 
                                         on_click=lambda e: self.update_data_callback(),
-                                        icon=ft.icons.REFRESH,
+                                        icon=ft.Icons.REFRESH,
                                         icon_color=ft.Colors.WHITE70,
                                         bgcolor=ft.Colors.PURPLE,
                                         color=ft.Colors.WHITE
@@ -299,7 +299,7 @@ class SamplesView:
                         ],
                         expand=True,
                     ),
-                    bgcolor=ft.colors.TRANSPARENT,
+                    bgcolor=ft.Colors.TRANSPARENT,
                     expand=True,
                 )
             ], spacing=10),
