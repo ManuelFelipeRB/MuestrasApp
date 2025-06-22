@@ -2,15 +2,16 @@ import flet as ft
 import math
 
 def main(page: ft.Page):
-    page.title = "My Projects"
+    page.title = "Gestíon de Contenedores"
     page.theme_mode = ft.ThemeMode.LIGHT
     page.padding = 20
     page.bgcolor = ft.Colors.GREY_50
     
     # Función para navegar a diferentes rutas
-    def navigate_to_project(project_name):
+    def navigate_to_project(project_route):
         def on_click(e):
-            page.route = f"/{project_name.lower().replace(' ', '_')}"
+            print(f"Navegando a: /{project_route}")  # Debug
+            page.route = f"/{project_route}"
             page.update()
         return on_click
     
@@ -18,30 +19,52 @@ def main(page: ft.Page):
     def create_header():
         return ft.Row([
             ft.Text(
-                "My Projects",
+                "Gestión de Contenedores",
                 size=32,
                 weight=ft.FontWeight.BOLD,
                 color=ft.Colors.BLACK87
             ),
             ft.Container(expand=True),
-            ft.Row([
-                ft.Text("Sort By:", size=14, color=ft.Colors.GREY_600),
-                ft.Dropdown(
-                    value="Recent Project",
-                    options=[
-                        ft.dropdown.Option("Recent Project"),
-                        ft.dropdown.Option("Name"),
-                        ft.dropdown.Option("Date Created"),
-                    ],
-                    width=150,
-                    text_size=14,
-                    border_color=ft.Colors.GREY_300,
-                )
-            ])
+            # ft.Row([
+            #     ft.Text("Sort By:", size=14, color=ft.Colors.GREY_600),
+            #     ft.Dropdown(
+            #         value="Recent Containers",
+            #         options=[
+            #             ft.dropdown.Option("Recent Project"),
+            #             ft.dropdown.Option("Name"),
+            #             ft.dropdown.Option("Date Created"),
+            #         ],
+            #         width=150,
+            #         text_size=14,
+            #         border_color=ft.Colors.GREY_300,
+            #     )
+            # ])
         ])
     
 ###################### Crear TODAS las tarjeta de proyecto  ###########################################
+    
     def create_project_card(title, description, color, avatars, project_route):
+
+        def on_hover(e):
+            container = e.control  # El Container que tiene el on_hover
+            if e.data == "true":  # mouse está encima
+                container.bgcolor = ft.Colors.GREY_50
+                container.shadow = ft.BoxShadow(
+                    spread_radius=1,
+                    blur_radius=15,
+                    color=ft.Colors.BLACK54,
+                    offset=ft.Offset(0, 2)
+                )
+            else:  # mouse se fue
+                container.bgcolor = ft.Colors.WHITE
+                container.shadow = ft.BoxShadow(
+                    spread_radius=0,
+                    blur_radius=10,
+                    color=ft.Colors.BLACK12,
+                    offset=ft.Offset(0, 2)
+                )
+            container.update()  # Usar container.update() en lugar de e.control.update()
+
         return ft.Container(
             content=ft.Column([
                 ft.Container(
@@ -84,11 +107,13 @@ def main(page: ft.Page):
                     )
                 ])
             ], spacing=10),
-            width=280,
-            height=160,
+            expand=True,
+            on_hover=on_hover,
+            height=180,
             padding=20,
             bgcolor=ft.Colors.WHITE,
             border_radius=12,
+            # REMOVER: mouse_cursor=ft.MouseCursor.CLICK,  # ❌ Esto causa el error
             shadow=ft.BoxShadow(
                 spread_radius=0,
                 blur_radius=10,
@@ -97,6 +122,7 @@ def main(page: ft.Page):
             ),
             on_click=navigate_to_project(project_route)
         )
+
     
     # Crear gráfico circular (donut chart)
     def create_progress_chart():
@@ -139,7 +165,7 @@ def main(page: ft.Page):
                                 ft.Text(
                                     "Completed",
                                     size=12,
-                                    color=ft.Colors.GREY_600
+                                    color=ft.Colors.WHITE
                                 )
                             ], 
                             alignment=ft.MainAxisAlignment.CENTER,
@@ -151,12 +177,12 @@ def main(page: ft.Page):
                 ft.Container(height=20),
                 ft.Column([
                     ft.Row([
-                        ft.Container(width=8, height=8, bgcolor=ft.Colors.BLUE_400, border_radius=4),
-                        ft.Text("Layouting", size=12, color=ft.Colors.GREY_700)
+                        ft.Container(width=8, height=8, bgcolor=ft.Colors.GREEN_400, border_radius=4),
+                        ft.Text("Asignaciones", size=12, color=ft.Colors.GREY_700)
                     ], spacing=8),
                     ft.Row([
                         ft.Container(width=8, height=8, bgcolor=ft.Colors.PURPLE_400, border_radius=4),
-                        ft.Text("Graphic Design", size=12, color=ft.Colors.GREY_700)
+                        ft.Text("Gestión Inventario", size=12, color=ft.Colors.GREY_700)
                     ], spacing=8),
                     ft.Row([
                         ft.Container(width=8, height=8, bgcolor=ft.Colors.ORANGE_400, border_radius=4),
@@ -199,27 +225,27 @@ def main(page: ft.Page):
     # Datos de los proyectos
     projects_data = [
         {
-            "title": "Graphic Design",
+            "title": "Gestion Inventario",
             "description": "Composition banner book cover",
             "color": ft.Colors.PINK_400,
             "avatars": ["https://images.unsplash.com/photo-1494790108755-2616b332c4a2?w=50", 
                       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50"],
-            "project_route": "graphic_design"
+            "project_route": "Gestion_inventario"
         },
         {
-            "title": "Magazine",
+            "title": "Ingresos",
             "description": "Editorial page content",
             "color": ft.Colors.BLUE_600,
             "avatars": ["https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=50",
                       "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=50"],
-            "project_route": "magazine"
+            "project_route": "Ingresos"
         },
         {
-            "title": "Layouting",
-            "description": "Fix layout on page ads",
-            "color": ft.Colors.LIGHT_BLUE_400,
+            "title": "Asignaciones",
+            "description": "Asignacion de contenedores a clientes",
+            "color": ft.Colors.GREEN_200,
             "avatars": ["https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=50"],
-            "project_route": "layouting"
+            "project_route": "Asignaciones"
         },
         {
             "title": "Branding",
@@ -238,7 +264,7 @@ def main(page: ft.Page):
         },
         {
             "title": "Photoshoot",
-            "description": "Get the photo ready for magazine",
+            "description": "Get the photo ready for Ingresos",
             "color": ft.Colors.DEEP_PURPLE_400,
             "avatars": ["https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?w=50",
                       "https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=50",
@@ -291,15 +317,15 @@ def main(page: ft.Page):
                     bgcolor=ft.Colors.GREY_50
                 )
             )
-        elif page.route == "/graphic_design":
+        elif page.route == "/Gestion_inventario":
             page.views.append(
                 ft.View(
-                    "/graphic_design",
+                    "/Gestion_inventario",
                     [
-                        ft.AppBar(title=ft.Text("Graphic Design Project"), bgcolor=ft.Colors.PINK_400),
+                        ft.AppBar(title=ft.Text("Gestion Inventario Project"), bgcolor=ft.Colors.PINK_400),
                         ft.Container(
                             content=ft.Column([
-                                ft.Text("Graphic Design Project", size=24, weight=ft.FontWeight.BOLD),
+                                ft.Text("Gestion Inventario Project", size=24, weight=ft.FontWeight.BOLD),
                                 ft.Text("Aquí iría el contenido específico del proyecto de diseño gráfico"),
                                 ft.ElevatedButton("Volver", on_click=lambda _: page.go("/"))
                             ], spacing=20),
@@ -308,15 +334,15 @@ def main(page: ft.Page):
                     ]
                 )
             )
-        elif page.route == "/magazine":
+        elif page.route == "/Ingresos":
             page.views.append(
                 ft.View(
-                    "/magazine",
+                    "/Ingresos",
                     [
-                        ft.AppBar(title=ft.Text("Magazine Project"), bgcolor=ft.Colors.BLUE_600),
+                        ft.AppBar(title=ft.Text("Ingresos Project"), bgcolor=ft.Colors.BLUE_600),
                         ft.Container(
                             content=ft.Column([
-                                ft.Text("Magazine Project", size=24, weight=ft.FontWeight.BOLD),
+                                ft.Text("Ingresos Project", size=24, weight=ft.FontWeight.BOLD),
                                 ft.Text("Aquí iría el contenido específico del proyecto de revista"),
                                 ft.ElevatedButton("Volver", on_click=lambda _: page.go("/"))
                             ], spacing=20),
@@ -326,15 +352,15 @@ def main(page: ft.Page):
                 )
             )
 
-        elif page.route == "/layouting":
+        elif page.route == "/Asignaciones":
             page.views.append(
                 ft.View(
-                    "/layouting",  # ✅ Misma ruta
+                    "/Asignaciones",  # ✅ Misma ruta
                     [
-                        ft.AppBar(title=ft.Text("Layouting Project"), bgcolor=ft.Colors.AMBER_200),
+                        ft.AppBar(title=ft.Text("Asignacion de Contenedores"), bgcolor=ft.Colors.GREEN_200),
                         ft.Container(
                             content=ft.Column([
-                                ft.Text("Layouting Project", size=24, weight=ft.FontWeight.BOLD),
+                                ft.Text("Asignacion de Contenedores a clientes", size=24, weight=ft.FontWeight.BOLD),
                                 ft.Text("Aquí iría el contenido específico del proyecto de layouting"),
                                 ft.ElevatedButton("Volver", on_click=lambda _: page.go("/"))
                             ], spacing=20),
@@ -343,6 +369,13 @@ def main(page: ft.Page):
                     ]
                 )
             )
+
+        elif page.route == "/photoshoot":
+            from app.ui.samples_view import SamplesView
+            page.views.append(SamplesView(page).get_view())  # ✅ CORRECTO
+
+
+        
         # Agrega más rutas según necesites...
         
         page.update()
@@ -361,4 +394,4 @@ def main(page: ft.Page):
 
 # Al final de tu archivo main:
 if __name__ == "__main__":
-    ft.app(target=main, view=ft.AppView.WEB_BROWSER, port=8080)
+    ft.app(target=main,  view=ft.AppView.WEB_BROWSER, port=8080)
